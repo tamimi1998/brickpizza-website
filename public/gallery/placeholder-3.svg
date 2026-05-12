@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <rect width="800" height="800" fill="#120805"/>
+  <rect x="120" y="200" width="560" height="400" rx="24" fill="rgba(255,160,80,0.15)" stroke="rgba(255,180,100,0.25)"/>
+  <text x="400" y="420" fill="rgba(255,220,180,0.35)" font-family="system-ui,sans-serif" font-size="26" text-anchor="middle">NY Pie " Placeholder</text>
+</svg>
