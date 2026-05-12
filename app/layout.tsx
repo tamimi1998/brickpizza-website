@@ -66,7 +66,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${bebas.variable} h-full scroll-smooth antialiased`}>
+    <html lang="en" className={`${dmSans.variable} ${bebas.variable} h-full antialiased`}>
       <body className="min-h-full bg-[#0a0503] text-amber-50">
         <JsonLdRestaurant />
         {children}

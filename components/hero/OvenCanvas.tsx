@@ -1,7 +1,7 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import { Suspense, type MutableRefObject } from "react";
+import { AdaptiveCanvas } from "@/components/AdaptiveCanvas";
 import { OvenScene } from "./OvenScene";
 
 type MouseRef = MutableRefObject<{ x: number; y: number }>;
@@ -14,17 +14,8 @@ export type OvenCanvasProps = {
 export function OvenCanvas({ progressRef, mouseRef }: OvenCanvasProps) {
   return (
     <div className="absolute inset-0 h-full w-full">
-      <Canvas
-        gl={{
-          alpha: false,
-          antialias: true,
-          powerPreference: "high-performance",
-          stencil: false,
-          depth: true,
-        }}
+      <AdaptiveCanvas
         className="h-full w-full touch-none"
-        dpr={[1, 2]}
-        shadows
         camera={{ position: [0, 0.38, 4.35], fov: 38, near: 0.1, far: 80 }}
       >
         <color attach="background" args={["#0c0704"]} />
@@ -32,7 +23,7 @@ export function OvenCanvas({ progressRef, mouseRef }: OvenCanvasProps) {
         <Suspense fallback={null}>
           <OvenScene progressRef={progressRef} mouseRef={mouseRef} />
         </Suspense>
-      </Canvas>
+      </AdaptiveCanvas>
     </div>
   );
 }

@@ -15,6 +15,11 @@ import {
   MaskFunction,
 } from "postprocessing";
 import { type MutableRefObject, useMemo, useRef, useState } from "react";
+import { usePerformanceContext } from "@/components/PerformanceProvider";
+import { OptimizedParticles } from "@/components/OptimizedParticles";
+import { FireGlowShader } from "@/components/shaders/FireGlowShader";
+import { SmokeShader } from "@/components/shaders/SmokeShader";
+import { HeatDistortionShader } from "@/components/shaders/HeatDistortionShader";
 
 type MouseRef = MutableRefObject<{ x: number; y: number }>;
 
@@ -22,13 +27,9 @@ function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function detRand(i: number, salt: number) {
-  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
-  return x - Math.floor(x);
-}
-
 function FireSheets({ progressRef }: { progressRef: MutableRefObject<number> }) {
   const group = useRef<F.Group>(null);
+  const planeGeo = useMemo(() => new F.PlaneGeometry(1, 1, 1, 1), []);
   const mats = useMemo(() => {
     return [0, 1, 2].map((i) => {
       return new F.MeshBasicMaterial({
@@ -50,11 +51,12 @@ function FireSheets({ progressRef }: { progressRef: MutableRefObject<number> }) 
       const plane = ch as F.Mesh;
       plane.rotation.z = Math.sin(t * 2.2 + i) * 0.12 + t * 0.08 * (i + 1);
       const s = 1 + 0.08 * Math.sin(t * 3 + i * 1.7) + intensity * 0.05;
-      plane.scale.set(s, s * (1.1 + i * 0.06), 1);
+      const sx = (2.4 + i * 0.4) * s;
+      const sy = (3.2 + i * 0.2) * s;
+      plane.scale.set(sx, sy, 1);
     });
     mats.forEach((m, i) => {
-      m.opacity =
-        (0.18 + i * 0.07 + intensity * 0.35) * (0.85 + 0.15 * intensity);
+      m.opacity = (0.18 + i * 0.07 + intensity * 0.35) * (0.85 + 0.15 * intensity);
     });
   });
 
@@ -65,8 +67,9 @@ function FireSheets({ progressRef }: { progressRef: MutableRefObject<number> }) 
           key={i}
           rotation={[0, 0, i * 0.35]}
           position={[0.02 * i, 0.04 * i, -0.12 * i]}
+          scale={[2.4 + i * 0.4, 3.2 + i * 0.2, 1]}
         >
-          <planeGeometry args={[2.4 + i * 0.4, 3.2 + i * 0.2, 1, 1]} />
+          <primitive object={planeGeo} attach="geometry" />
           <primitive object={mats[i]} attach="material" />
         </mesh>
       ))}
@@ -74,60 +77,9 @@ function FireSheets({ progressRef }: { progressRef: MutableRefObject<number> }) 
   );
 }
 
-function EmberPoints({ progressRef }: { progressRef: MutableRefObject<number> }) {
-  const ref = useRef<F.Points>(null);
-  const { positions, speeds } = useMemo(() => {
-    const count = 420;
-    const pos = new Float32Array(count * 3);
-    const spd = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (detRand(i, 1) - 0.5) * 3;
-      pos[i * 3 + 1] = detRand(i, 2) * 2 - 0.5;
-      pos[i * 3 + 2] = detRand(i, 3) * 2.5 - 0.8;
-      spd[i] = 0.35 + detRand(i, 4) * 1.2;
-    }
-    return { positions: pos, speeds: spd };
-  }, []);
-
-  useFrame(({ clock }) => {
-    const burst = progressRef.current;
-    if (!ref.current) return;
-    const t = clock.elapsedTime;
-    const geo = ref.current.geometry.attributes.position as F.BufferAttribute;
-    const arr = geo.array as Float32Array;
-    for (let i = 0; i < arr.length / 3; i++) {
-      arr[i * 3 + 1] += speeds[i] * 0.004 * (1 + burst * 2.2);
-      arr[i * 3] += Math.sin(t * 2 + i) * 0.0012 * (1 + burst);
-      if (arr[i * 3 + 1] > 2.4) {
-        arr[i * 3 + 1] = -0.8;
-        arr[i * 3] = (detRand(i, 300 + Math.floor(t * 10)) - 0.5) * 3;
-        arr[i * 3 + 2] = detRand(i, 400 + Math.floor(t * 7)) * 2.5 - 0.8;
-      }
-    }
-    geo.needsUpdate = true;
-    ref.current.rotation.y = t * 0.04 * (1 + burst * 0.5);
-  });
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.028}
-        color="#ff9a56"
-        transparent
-        opacity={0.75}
-        depthWrite={false}
-        blending={F.AdditiveBlending}
-        sizeAttenuation
-      />
-    </points>
-  );
-}
-
 function ScrollSparkles({ progressRef }: { progressRef: MutableRefObject<number> }) {
   const g = useRef<F.Group>(null);
+  const { sparklesCount } = usePerformanceContext();
   useFrame(({ clock }) => {
     const p = progressRef.current;
     if (!g.current) return;
@@ -136,9 +88,16 @@ function ScrollSparkles({ progressRef }: { progressRef: MutableRefObject<number>
   });
   return (
     <group ref={g} position={[0, -0.05, 0.25]}>
-      <Sparkles count={140} scale={[3.2, 2.4, 2.2]} size={3.5} speed={1.15} opacity={0.55} color="#ffb46b" />
       <Sparkles
-        count={80}
+        count={sparklesCount[0]}
+        scale={[3.2, 2.4, 2.2]}
+        size={3.5}
+        speed={1.15}
+        opacity={0.55}
+        color="#ffb46b"
+      />
+      <Sparkles
+        count={sparklesCount[1]}
         position={[0, 0.3, 0.2]}
         scale={[0.8, 0.15, 0.8]}
         size={1.6}
@@ -160,11 +119,14 @@ function PizzaPeel({
   hovered: boolean;
   setHovered: (v: boolean) => void;
 }) {
+  const { quality, shadows } = usePerformanceContext();
   const group = useRef<F.Group>(null);
   const crust = useRef<F.Mesh>(null);
   const cheese = useRef<F.Mesh>(null);
   const bubbles = useRef<F.Group>(null);
   const pepRef = useRef<(F.Mesh | null)[]>([]);
+
+  const castOrNot = shadows;
 
   useFrame((state) => {
     if (!group.current) return;
@@ -175,8 +137,7 @@ function PizzaPeel({
     const swayY = mouseRef.current.y * 0.05 * (1 - into * 0.6);
     group.current.position.set(swayX, -0.02 + swayY * 0.5, peelZ);
 
-    const tilt =
-      Math.sin(state.clock.elapsedTime * 1.2) * 0.02 * (0.4 + into);
+    const tilt = Math.sin(state.clock.elapsedTime * 1.2) * 0.02 * (0.4 + into);
     group.current.rotation.set(
       -0.12 + tilt,
       -0.05 + mouseRef.current.x * 0.04,
@@ -191,11 +152,9 @@ function PizzaPeel({
       const ch = cheese.current;
       const stretch = hovered ? 1.035 : 1;
       ch.scale.setScalar(F.MathUtils.lerp(1, stretch, 0.12));
-      const mat = ch.material as F.MeshStandardMaterial;
-      mat.emissiveIntensity =
-        0.25 +
-        into * 0.9 +
-        Math.sin(state.clock.elapsedTime * 5) * 0.05;
+      const mat = ch.material as F.MeshPhysicalMaterial;
+      const pulse = Math.sin(state.clock.elapsedTime * 5) * 0.05;
+      mat.emissiveIntensity = 0.25 + into * (quality === "high" ? 1.15 : 0.9) + pulse;
     }
     if (bubbles.current) {
       bubbles.current.children.forEach((b, i) => {
@@ -227,17 +186,12 @@ function PizzaPeel({
 
   return (
     <group ref={group}>
-      <mesh
-        receiveShadow
-        castShadow
-        position={[0, -0.08, -0.1]}
-        rotation={[0.04, 0, 0]}
-      >
+      <mesh receiveShadow={castOrNot} castShadow={castOrNot} position={[0, -0.08, -0.1]} rotation={[0.04, 0, 0]}>
         <boxGeometry args={[0.52, 0.025, 0.95]} />
         <meshStandardMaterial color="#6b4423" roughness={0.88} metalness={0.05} />
       </mesh>
       <group onPointerEnter={() => setHovered(true)} onPointerLeave={() => setHovered(false)}>
-        <mesh ref={crust} castShadow rotation={[0.02, 0, 0]} position={[0, 0.06, 0]}>
+        <mesh ref={crust} castShadow={castOrNot} rotation={[0.02, 0, 0]} position={[0, 0.06, 0]}>
           <cylinderGeometry args={[0.28, 0.3, 0.05, 48]} />
           <meshStandardMaterial
             color="#a0632b"
@@ -247,15 +201,17 @@ function PizzaPeel({
             emissiveIntensity={0.15}
           />
         </mesh>
-        <mesh ref={cheese} castShadow position={[0, 0.12, 0]} rotation={[0.02, 0, 0]}>
+        <mesh ref={cheese} castShadow={castOrNot} position={[0, 0.12, 0]} rotation={[0.02, 0, 0]}>
           <cylinderGeometry args={[0.26, 0.27, 0.045, 48]} />
-          <meshStandardMaterial
+          <meshPhysicalMaterial
             color="#f6d68f"
-            roughness={0.42}
-            metalness={0.08}
+            roughness={quality === "high" ? 0.26 : quality === "medium" ? 0.38 : 0.48}
+            metalness={quality === "high" ? 0.14 : 0.08}
             emissive="#f0a64a"
             emissiveIntensity={0.25}
             envMapIntensity={1}
+            clearcoat={quality === "high" ? 0.42 : quality === "medium" ? 0.18 : 0}
+            clearcoatRoughness={0.4}
           />
         </mesh>
         <group ref={bubbles} position={[0, 0.14, 0]}>
@@ -266,7 +222,7 @@ function PizzaPeel({
               <mesh
                 key={i}
                 position={[Math.cos(a) * r, 0, Math.sin(a) * r * 0.9]}
-                castShadow
+                castShadow={castOrNot}
               >
                 <sphereGeometry args={[0.022 + (i % 4) * 0.004, 12, 12]} />
                 <meshStandardMaterial
@@ -286,7 +242,7 @@ function PizzaPeel({
               pepRef.current[i] = el;
             }}
             position={p}
-            castShadow
+            castShadow={castOrNot}
           >
             <cylinderGeometry args={[0.045, 0.045, 0.012, 16]} />
             <meshStandardMaterial
@@ -303,21 +259,23 @@ function PizzaPeel({
 }
 
 function OvenInterior() {
+  const { shadows } = usePerformanceContext();
+  const recv = shadows;
   return (
     <group position={[0, 0.1, 0.45]}>
-      <mesh receiveShadow position={[0, 0.9, -0.35]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh receiveShadow={recv} position={[0, 0.9, -0.35]} rotation={[Math.PI / 2, 0, 0]}>
         <boxGeometry args={[3.2, 2.4, 0.35]} />
         <meshStandardMaterial color="#3d2920" roughness={0.95} metalness={0.02} />
       </mesh>
-      <mesh receiveShadow position={[0, -0.2, -0.45]}>
+      <mesh receiveShadow={recv} position={[0, -0.2, -0.45]}>
         <boxGeometry args={[3.2, 1.2, 0.2]} />
         <meshStandardMaterial color="#4a3428" roughness={0.92} />
       </mesh>
-      <mesh receiveShadow position={[-1.35, 0.35, 0.15]}>
+      <mesh receiveShadow={recv} position={[-1.35, 0.35, 0.15]}>
         <boxGeometry args={[0.35, 1.8, 1.6]} />
         <meshStandardMaterial color="#5c4032" roughness={0.9} />
       </mesh>
-      <mesh receiveShadow position={[1.35, 0.35, 0.15]}>
+      <mesh receiveShadow={recv} position={[1.35, 0.35, 0.15]}>
         <boxGeometry args={[0.35, 1.8, 1.6]} />
         <meshStandardMaterial color="#5c4032" roughness={0.9} />
       </mesh>
@@ -345,6 +303,15 @@ function OvenInterior() {
   );
 }
 
+function DemandInvalidate() {
+  const { invalidate } = useThree();
+  const { reducedMotion } = usePerformanceContext();
+  useFrame(() => {
+    if (reducedMotion) invalidate();
+  });
+  return null;
+}
+
 function ScrollCameraRig({
   progressRef,
   mouseRef,
@@ -362,11 +329,7 @@ function ScrollCameraRig({
     const mx = mouseRef.current.x * (0.14 * (1 - e * 0.85));
     const my = mouseRef.current.y * (0.1 * (1 - e * 0.85));
 
-    vec.current.set(
-      mx,
-      0.38 + my * 0.2 + e * -0.22,
-      F.MathUtils.lerp(4.35, 0.72, e),
-    );
+    vec.current.set(mx, 0.38 + my * 0.2 + e * -0.22, F.MathUtils.lerp(4.35, 0.72, e));
     camera.position.lerp(vec.current, 0.08);
 
     const lx = mx * 0.5;
@@ -407,6 +370,7 @@ function HeatHaze({ progressRef }: { progressRef: MutableRefObject<number> }) {
 }
 
 function WarmLights({ progressRef }: { progressRef: MutableRefObject<number> }) {
+  const { shadows, spotShadowMap } = usePerformanceContext();
   const spot = useRef<F.SpotLight>(null);
   const oven = useRef<F.PointLight>(null);
   useFrame(() => {
@@ -418,14 +382,14 @@ function WarmLights({ progressRef }: { progressRef: MutableRefObject<number> }) 
     <>
       <spotLight
         ref={spot}
-        castShadow
+        castShadow={shadows}
         position={[1.4, 2.2, 2.8]}
         angle={0.45}
         penumbra={1}
         intensity={2.4}
         color="#ffd8b0"
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={spotShadowMap[0]}
+        shadow-mapSize-height={spotShadowMap[1]}
       />
       <pointLight
         ref={oven}
@@ -490,9 +454,17 @@ export function OvenScene({
   mouseRef: MouseRef;
 }) {
   const [hoveredPizza, setHoveredPizza] = useState(false);
+  const {
+    shadows,
+    usePostProcessing,
+    useShaderLayers,
+    useHeatFallback,
+    contactShadowBlur,
+  } = usePerformanceContext();
 
   return (
     <>
+      <DemandInvalidate />
       <ScrollCameraRig progressRef={progressRef} mouseRef={mouseRef} />
 
       <ambientLight intensity={0.06} />
@@ -509,20 +481,32 @@ export function OvenScene({
         setHovered={setHoveredPizza}
       />
 
+      {useShaderLayers ? <FireGlowShader progressRef={progressRef} /> : null}
       <FireSheets progressRef={progressRef} />
       <ScrollSparkles progressRef={progressRef} />
-      <EmberPoints progressRef={progressRef} />
-      <HeatHaze progressRef={progressRef} />
+      <OptimizedParticles progressRef={progressRef} />
+      {useShaderLayers && !useHeatFallback ? (
+        <HeatDistortionShader progressRef={progressRef} />
+      ) : null}
+      {useHeatFallback ? <HeatHaze progressRef={progressRef} /> : null}
+      {useShaderLayers ? (
+        <>
+          <SmokeShader progressRef={progressRef} offset={[0.2, 0.32, 0.78]} />
+          <SmokeShader progressRef={progressRef} offset={[-0.12, 0.18, 0.92]} />
+        </>
+      ) : null}
 
-      <ContactShadows
-        position={[0, -0.36, 0.6]}
-        opacity={0.45}
-        scale={8}
-        blur={2.2}
-        far={4}
-      />
+      {shadows ? (
+        <ContactShadows
+          position={[0, -0.36, 0.6]}
+          opacity={0.45}
+          scale={8}
+          blur={contactShadowBlur}
+          far={4}
+        />
+      ) : null}
 
-      <CinematicComposer progressRef={progressRef} />
+      {usePostProcessing ? <CinematicComposer progressRef={progressRef} /> : null}
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { BRICK_SITE } from "@/lib/site";
+import { BRICK_SITE, EXTERNAL_REL } from "@/lib/site";
 import { Camera } from "lucide-react";
 
 const placeholders = [
@@ -38,8 +38,8 @@ export function InstagramSection() {
           <a
             href={BRICK_SITE.instagramUrl}
             target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex w-fit items-center justify-center rounded-full border border-amber-400/45 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-amber-50 backdrop-blur-md transition-all hover:border-orange-300/70 hover:bg-white/10"
+            rel={EXTERNAL_REL}
+            className="cta-external inline-flex w-fit items-center justify-center rounded-full border border-amber-400/45 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-amber-50 backdrop-blur-md"
           >
             Follow Brick Pizza Kuwait
           </a>

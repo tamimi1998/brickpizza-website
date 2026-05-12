@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import { Clock, MapPin, Navigation, Camera, ShoppingBag } from "lucide-react";
-import { BRICK_SITE, BUSINESS_HOURS } from "@/lib/site";
+import { BRICK_SITE, BUSINESS_HOURS, EXTERNAL_REL } from "@/lib/site";
 
 export function Location() {
   return (
-    <section id="location" className="scroll-mt-6 bg-gradient-to-b from-[#100805] to-[#070404] px-4 py-24 sm:px-6 md:px-12 md:py-28">
+    <section id="visit" className="scroll-mt-6 bg-gradient-to-b from-[#100805] to-[#070404] px-4 py-24 sm:px-6 md:px-12 md:py-28">
       <div className="mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -52,8 +52,8 @@ export function Location() {
               <a
                 href={BRICK_SITE.instagramUrl}
                 target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-orange-200 hover:text-orange-100"
+                rel={EXTERNAL_REL}
+                className="font-semibold text-orange-200 transition-all hover:scale-[1.02] hover:text-orange-100 hover:drop-shadow-[0_0_12px_rgba(255,160,90,0.4)]"
               >
                 {BRICK_SITE.instagramHandle}
               </a>
@@ -63,17 +63,17 @@ export function Location() {
               <a
                 href={BRICK_SITE.mapsSearchUrl}
                 target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-3 text-sm font-semibold text-[#1a0a04] shadow-[0_0_28px_rgba(255,140,66,0.35)] transition-transform hover:scale-[1.02]"
+                rel={EXTERNAL_REL}
+                className="cta-external inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-3 text-sm font-semibold text-[#1a0a04] shadow-[0_0_28px_rgba(255,140,66,0.35)]"
               >
                 <Navigation className="size-4" strokeWidth={2} />
                 Get directions
               </a>
               <a
-                href={BRICK_SITE.orderOnlineUrl}
+                href={BRICK_SITE.talabatUrl}
                 target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-400/45 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-amber-50 backdrop-blur-md hover:border-orange-300/70"
+                rel={EXTERNAL_REL}
+                className="cta-external inline-flex items-center justify-center gap-2 rounded-full border border-amber-400/45 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-amber-50 backdrop-blur-md"
               >
                 <ShoppingBag className="size-4" strokeWidth={1.5} />
                 Order online
@@ -81,8 +81,8 @@ export function Location() {
               <a
                 href={BRICK_SITE.instagramUrl}
                 target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-transparent px-6 py-3 text-sm font-semibold text-white hover:border-amber-400/40"
+                rel={EXTERNAL_REL}
+                className="cta-external inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-transparent px-6 py-3 text-sm font-semibold text-white"
               >
                 <Camera className="size-4" strokeWidth={1.5} />
                 Follow Instagram
@@ -94,19 +94,24 @@ export function Location() {
             initial={{ opacity: 0, scale: 0.98 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative min-h-[300px] overflow-hidden rounded-3xl border border-white/10 bg-[#120a07] lg:min-h-[380px]"
+            className="relative aspect-[4/3] min-h-[280px] overflow-hidden rounded-3xl border border-white/10 bg-[#120a07] shadow-[0_24px_80px_rgba(0,0,0,0.45)] lg:aspect-auto lg:min-h-[420px]"
           >
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
-              <p className="text-sm text-amber-200/55">Embed Google Maps here</p>
-              <a
-                href={BRICK_SITE.mapsSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-medium uppercase tracking-[0.2em] text-orange-300/80 hover:text-orange-200"
-              >
-                Open in maps →
-              </a>
-            </div>
+            <iframe
+              title="Brick Pizza — Salmiya, Kuwait on Google Maps"
+              src={BRICK_SITE.mapsEmbedUrl}
+              className="absolute inset-0 h-full w-full border-0 grayscale-[0.15] contrast-[1.02] [filter:saturate(1.05)]"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+            <a
+              href={BRICK_SITE.mapsSearchUrl}
+              target="_blank"
+              rel={EXTERNAL_REL}
+              className="absolute bottom-3 right-3 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-100/90 backdrop-blur-md transition-all hover:border-amber-400/50 hover:text-white"
+            >
+              Open in Google Maps
+            </a>
           </motion.div>
         </div>
       </div>

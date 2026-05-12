@@ -2,40 +2,39 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import {
-  MENU_TABS,
-  getItemsForCategory,
-  type MenuCategoryId,
-  BEST_SELLER_ITEMS,
-} from "@/lib/menu-data";
+import { NavLink } from "@/components/NavLink";
+import { BRICK_SITE, EXTERNAL_REL } from "@/lib/site";
+import { MENU_TABS, getItemsForCategory, type MenuCategoryId, BEST_SELLER_ITEMS } from "@/lib/menu-data";
 import { MenuCard } from "@/components/menu/MenuCard";
+import { useLenisRef } from "@/components/SmoothScrollProvider";
+import { usePerformanceContext } from "@/components/PerformanceProvider";
 
 const SECTION_LABELS: Record<
   MenuCategoryId,
   { title: string; eyebrow: string; anchor: string }
 > = {
   detroit: {
-    anchor: "menu-detroit",
+    anchor: "detroit",
     eyebrow: "Featured / Detroit-style",
     title: "Detroit pizza",
   },
   ny: {
-    anchor: "menu-ny",
+    anchor: "ny-pizza",
     eyebrow: "48-hour dough",
     title: "New York pizza",
   },
   sauces: {
-    anchor: "menu-sauces",
+    anchor: "sauces",
     eyebrow: "Dips & heat",
     title: "Sauces",
   },
   dessert: {
-    anchor: "menu-dessert",
+    anchor: "dessert",
     eyebrow: "Sweet finish",
     title: "Dessert",
   },
   drinks: {
-    anchor: "menu-drinks",
+    anchor: "drinks",
     eyebrow: "Sip cold",
     title: "Drinks",
   },
@@ -43,6 +42,8 @@ const SECTION_LABELS: Record<
 
 export function MenuExperience() {
   const [active, setActive] = useState<MenuCategoryId>("detroit");
+  const lenisRef = useLenisRef();
+  const { useLenis, reducedMotion } = usePerformanceContext();
   const sectionRefs = useRef<Record<MenuCategoryId, HTMLElement | null>>({
     detroit: null,
     ny: null,
@@ -51,10 +52,19 @@ export function MenuExperience() {
     drinks: null,
   });
 
-  const scrollToId = useCallback((id: MenuCategoryId) => {
-    const el = sectionRefs.current[id];
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  const scrollToId = useCallback(
+    (id: MenuCategoryId) => {
+      const el = sectionRefs.current[id];
+      if (!el) return;
+      const lenis = lenisRef.current;
+      if (lenis && useLenis && !reducedMotion) {
+        lenis.scrollTo(el, { offset: -88 });
+      } else {
+        el.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+      }
+    },
+    [lenisRef, reducedMotion, useLenis],
+  );
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -94,6 +104,30 @@ export function MenuExperience() {
               Dine in, pickup, or delivery. Detroit-style & New York-style pies, house sauces, dessert, and drinks—all
               priced in KD.
             </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a
+                href={BRICK_SITE.talabatUrl}
+                target="_blank"
+                rel={EXTERNAL_REL}
+                className="cta-external inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-600 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-[#1a0602] shadow-[0_0_28px_rgba(255,140,66,0.4)]"
+              >
+                Order Online
+              </a>
+              <a
+                href={BRICK_SITE.talabatUrl}
+                target="_blank"
+                rel={EXTERNAL_REL}
+                className="cta-external inline-flex items-center justify-center rounded-full border border-orange-400/45 bg-white/[0.06] px-8 py-3.5 text-sm font-semibold tracking-wide text-amber-50 backdrop-blur-md"
+              >
+                View Full Menu
+              </a>
+              <NavLink
+                href="#detroit"
+                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-transparent px-8 py-3.5 text-sm font-semibold text-white/90 hover:border-amber-400/35"
+              >
+                Browse on page
+              </NavLink>
+            </div>
           </motion.div>
 
           <motion.div

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 :root {
   --background: #0a0503;
@@ -44,7 +45,65 @@ canvas {
   height: 6px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(251, 146, 60, 0.35);
-  border-radius: 999px;
+@keyframes ember-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.cta-external {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.cta-external:hover {
+  transform: scale(1.03);
+  box-shadow:
+    0 0 32px rgba(255, 120, 60, 0.45),
+    0 0 60px rgba(255, 80, 30, 0.15);
+}
+
+/* Cinematic frame: vignette + subtle film grain (lightweight CSS fallback on mobile / low preset). */
+.hero-cinema-vignette {
+  box-shadow: inset 0 0 min(22vw, 180px) min(14vw, 120px) rgba(0, 0, 0, 0.55);
+}
+
+.hero-cinema-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  animation: grain-shift 8s steps(10) infinite;
+}
+
+@keyframes grain-shift {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-10%, -10%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .hero-cinema-grain::after {
+    animation: none;
+    opacity: 0.06;
+  }
 }

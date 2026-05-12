@@ -10,7 +10,7 @@ export function JsonLdRestaurant() {
     name: BRICK_SITE.nameWithTag,
     alternateName: BRICK_SITE.name,
     url: siteUrl,
-    sameAs: [BRICK_SITE.instagramUrl],
+    sameAs: [BRICK_SITE.instagramUrl, BRICK_SITE.talabatUrl],
     servesCuisine: ["Pizza", "Italian-American", "Detroit-style pizza", "New York-style pizza"],
     priceRange: "KD",
     address: {
